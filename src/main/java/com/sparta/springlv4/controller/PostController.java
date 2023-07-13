@@ -1,50 +1,54 @@
 package com.sparta.springlv4.controller;
 
-import com.sparta.springlv4.dto.ApiResult;
 import com.sparta.springlv4.dto.PostRequestDto;
 import com.sparta.springlv4.dto.PostResponseDto;
+import com.sparta.springlv4.dto.Status;
+import com.sparta.springlv4.security.UserDetailsImpl;
 import com.sparta.springlv4.service.PostService;
-import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
-
+@RequestMapping("/api")
 public class PostController {
 
-    private final PostService postService;
+    private final PostService postSerivce;
 
-    // Post 작성 API
-    @PostMapping("/api/posts")
-    public PostResponseDto createPost(@RequestBody PostRequestDto requestDto, HttpServletRequest request) { // 객체 형식으로 넘어오기 때문에 RequestBody를 사용
-        return postService.createPost(requestDto, request);
+    // 게시글 전체 조회 API
+    @GetMapping("/posts")
+    public List<PostResponseDto> getPostList(){
+        return postSerivce.getPostList();
     }
 
-    // 전체 Post 조회 API
-    @GetMapping("/api/posts")
-    public List<PostResponseDto> getPosts() {
-        return postService.getPosts();
+    // 게시글 선택 조회 API
+    @GetMapping("/post/{id}")
+    public PostResponseDto getPost(@PathVariable Long id){
+        return postSerivce.getPost(id);
     }
 
-    // 선택 Post 조회 API
-    @GetMapping("/api/posts/{id}")
-    public PostResponseDto getPost(@PathVariable Long id) {
-        return postService.getPost(id);
+    // 게시글 작성 API
+    @PostMapping("/post")
+    public PostResponseDto createPost(@RequestBody PostRequestDto postRequestDto,
+                                      @AuthenticationPrincipal UserDetailsImpl userDetails){
+        return postSerivce.createPost(postRequestDto, userDetails.getUser());
     }
 
-    // Post 수정 API
-    @PutMapping("/api/posts/{id}")
-    public PostResponseDto updatePost(@PathVariable Long id, @RequestBody PostRequestDto requestDto, HttpServletRequest request) {
-        return postService.updatePost(id, requestDto, request);
+    // 게시글 수정 API
+    @PutMapping("/post/{id}")
+    public PostResponseDto updatePost(@PathVariable Long id,
+                                      @RequestBody PostRequestDto postRequestDto,
+                                      @AuthenticationPrincipal UserDetailsImpl userDetails){
+        return postSerivce.updatePost(id, postRequestDto, userDetails.getUser());
     }
 
-    @DeleteMapping("/api/posts/{id}")
-    public ApiResult deletePost(@PathVariable Long id, HttpServletRequest request) {
-        postService.deletePost(id, request);
-        return new ApiResult("게시글 삭제 성공", HttpStatus.OK.value()); // 게시글 삭제 성공시 ApiResult Dto를 사용하여 성공 메세지와 statusCode를 띄움
+    // 게시글 삭제 API
+    @DeleteMapping("/post/{id}")
+    public Status deletePost(@PathVariable Long id,
+                             @AuthenticationPrincipal UserDetailsImpl userDetails){
+        return postSerivce.deletePost(id, userDetails.getUser());
     }
 }
